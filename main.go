@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/SultanKs4/yomemji/util"
 	"github.com/chromedp/chromedp"
@@ -14,7 +15,7 @@ import (
 
 func main() {
 	getLinksFromChannelUrl()
-	getUrlArray(util.GetListFile())
+	// getUrlArray(util.GetListFile())
 }
 
 func getUrlArray(pathArray []string) {
@@ -46,12 +47,32 @@ func getLinksFromChannelUrl() {
 	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), chromedp.UserDataDir(util.GetUserDataDir()), chromedp.Flag("headless", false))
 	defer cancel()
 
-	taskCtx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+	taskCtx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
-	for scanner.Scan() {
-		util.RunTaskGetLinks(taskCtx, scanner.Text())
+	if err := chromedp.Run(taskCtx); err != nil {
+		panic(err)
 	}
+
+	urls := []string{}
+	for scanner.Scan() {
+		urls = append(urls, scanner.Text())
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(urls))
+	for _, v := range urls {
+		go func(url string) {
+			defer wg.Done()
+			taskCtxN, cancel := chromedp.NewContext(taskCtx)
+			defer cancel()
+			if err := chromedp.Run(taskCtxN); err != nil {
+				panic(err)
+			}
+			util.RunTaskGetLinks(taskCtxN, url)
+		}(v)
+	}
+	wg.Wait()
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)

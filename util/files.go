@@ -14,7 +14,7 @@ import (
 )
 
 func CreateFileLinks(title string, nodes []*cdp.Node) {
-	if err := os.Mkdir("links", os.ModePerm); err != nil {
+	if err := os.MkdirAll("links", os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
 	f, err := os.OpenFile(fmt.Sprintf("links/%s.txt", title), os.O_RDWR|os.O_CREATE, 0755)
