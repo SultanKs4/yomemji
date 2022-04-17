@@ -30,7 +30,6 @@ Step:
 1. Need Chrome Browser because using `chromedp`
 2. Only tested in `WSL2 Ubuntu` so the code only load Chrome Data Directory Ubuntu.
 3. For exclude login google account etc process i using **Chrome User Data** from browser that already logged in manually.
-4. When running this program it will open chrome as `non-headless` because idk when using `headless` mode only load badges links not emoji links.
 
 ## Disclaimer :warning:
 

@@ -23,26 +23,34 @@ func CreateFileLinks(title string, nodes []*cdp.Node) {
 	}
 	defer f.Close()
 
+	var wg sync.WaitGroup
 	for _, v := range nodes {
+		wg.Add(1)
 		src := v.AttributeValue("src")
-
 		if src == "" {
 			continue
 		}
 
-		// change reso badges
-		if strings.Contains(src, "s64") {
-			src = strings.Replace(src, "s64", "s512", -1)
-		}
-		// change reso emoji
-		if strings.Contains(src, "w48-h48") {
-			src = strings.Replace(src, "w48-h48", "w448-h448", -1)
-		}
+		urlChan := make(chan string)
+		go func(url string) {
+			defer wg.Done()
+			// change reso badges
+			if strings.Contains(url, "s64") {
+				url = strings.Replace(url, "s64", "s512", -1)
+			}
+			// change reso emoji
+			if strings.Contains(url, "w48-h48") {
+				url = strings.Replace(url, "w48-h48", "w448-h448", -1)
+			}
+			urlChan <- url
+		}(src)
+		url := <-urlChan
 
-		if _, err := f.Write([]byte(fmt.Sprintf("%s\n", src))); err != nil {
+		if _, err := f.Write([]byte(fmt.Sprintf("%s\n", url))); err != nil {
 			log.Fatal(err)
 		}
 	}
+	wg.Wait()
 }
 
 func DownloadImgUrl(path string, urls []string) {
