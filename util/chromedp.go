@@ -19,19 +19,20 @@ func GetUserDataDir() string {
 	return fmt.Sprintf("%v/.config/google-chrome/", dir)
 }
 
-func clickJoin(url string) chromedp.Tasks {
+func taskgetLinks(url string, titleNode *[]*cdp.Node, nodes *[]*cdp.Node) chromedp.Tasks {
 	return chromedp.Tasks{
+		chromedp.EmulateViewport(1920, 1080),
 		chromedp.Navigate(url),
 		chromedp.Click("div#sponsor-button > ytd-button-renderer > a", chromedp.NodeVisible),
+		chromedp.Nodes("yt-formatted-string.channel-title", titleNode, chromedp.ByQuery),
+		chromedp.Nodes("yt-img-shadow.ytd-sponsorships-perk-renderer > img", nodes, chromedp.ByQueryAll, chromedp.NodeVisible),
 	}
 }
 
 func RunTaskGetLinks(ctx context.Context, url string) {
 	var titleNode []*cdp.Node
 	var nodes []*cdp.Node
-	if err := chromedp.Run(ctx, clickJoin(url),
-		chromedp.Nodes("yt-formatted-string.channel-title", &titleNode, chromedp.ByQuery),
-		chromedp.Nodes("yt-img-shadow.ytd-sponsorships-perk-renderer > img", &nodes, chromedp.ByQueryAll, chromedp.NodeVisible)); err != nil {
+	if err := chromedp.Run(ctx, taskgetLinks(url, &titleNode, &nodes)); err != nil {
 		log.Fatal(err)
 	}
 	title := titleNode[0].Children[0].NodeValue

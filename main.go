@@ -43,7 +43,7 @@ func getLinksFromChannelUrl() {
 
 	scanner := bufio.NewScanner(f)
 
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), chromedp.UserDataDir(util.GetUserDataDir()), chromedp.Flag("headless", false))
+	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), chromedp.UserDataDir(util.GetUserDataDir()), chromedp.Flag("headless", true))
 	defer cancel()
 
 	taskCtx, cancel := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
