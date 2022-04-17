@@ -25,11 +25,12 @@ func CreateFileLinks(title string, nodes []*cdp.Node) {
 
 	var wg sync.WaitGroup
 	for _, v := range nodes {
-		wg.Add(1)
 		src := v.AttributeValue("src")
 		if src == "" {
 			continue
 		}
+
+		wg.Add(1)
 
 		urlChan := make(chan string)
 		go func(url string) {
