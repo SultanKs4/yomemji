@@ -50,7 +50,8 @@ func getLinksFromChannelUrl() {
 	defer cancel()
 
 	for scanner.Scan() {
-		util.RunTaskGetLinks(taskCtx, scanner.Text())
+		title, links := util.RunTaskGetLinks(taskCtx, scanner.Text())
+		util.CreateFileLinks(title, links)
 	}
 
 	if err := scanner.Err(); err != nil {

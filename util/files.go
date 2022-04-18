@@ -9,11 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/chromedp/cdproto/cdp"
 )
 
-func CreateFileLinks(title string, nodes []*cdp.Node) {
+func CreateFileLinks(title string, links []string) {
 	if err := os.MkdirAll("links", os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
@@ -24,12 +22,7 @@ func CreateFileLinks(title string, nodes []*cdp.Node) {
 	defer f.Close()
 
 	var wg sync.WaitGroup
-	for _, v := range nodes {
-		src := v.AttributeValue("src")
-		if src == "" {
-			continue
-		}
-
+	for _, v := range links {
 		wg.Add(1)
 
 		urlChan := make(chan string)
@@ -44,7 +37,7 @@ func CreateFileLinks(title string, nodes []*cdp.Node) {
 				url = strings.Replace(url, "w48-h48", "w448-h448", -1)
 			}
 			urlChan <- url
-		}(src)
+		}(v)
 		url := <-urlChan
 
 		if _, err := f.Write([]byte(fmt.Sprintf("%s\n", url))); err != nil {
