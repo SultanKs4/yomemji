@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
@@ -25,12 +26,13 @@ func taskgetLinks(url string, titleNode *[]*cdp.Node, linkNodes *[]*cdp.Node) ch
 		chromedp.EmulateViewport(1920, 1080),
 		chromedp.Navigate(url),
 		chromedp.Nodes("ytd-channel-name > #container > #text-container > #text", titleNode, chromedp.ByQuery, chromedp.NodeVisible),
-		chromedp.Click("div#sponsor-button > ytd-button-renderer > a", chromedp.NodeVisible),
+		chromedp.Click("[aria-label='Join this channel']", chromedp.NodeVisible),
 		chromedp.Nodes("yt-img-shadow.ytd-sponsorships-perk-renderer > img", linkNodes, chromedp.ByQueryAll, chromedp.NodeVisible),
 	}
 }
 
-func RunTaskGetLinks(ctx context.Context, url string) (string, []string) {
+func RunTaskGetLinks(ctx context.Context, wg *sync.WaitGroup, url string) {
+	defer wg.Done()
 	var titleNode []*cdp.Node
 	var linkNodes []*cdp.Node
 	if err := chromedp.Run(ctx, taskgetLinks(url, &titleNode, &linkNodes)); err != nil {
@@ -48,6 +50,5 @@ func RunTaskGetLinks(ctx context.Context, url string) (string, []string) {
 		}
 		links = append(links, src)
 	}
-
-	return title, links
+	CreateFileLinks(title, links)
 }

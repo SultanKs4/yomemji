@@ -71,7 +71,7 @@ func DownloadImgUrl(path string, urls []string) {
 			if err != nil {
 				log.Fatal(err)
 			}
-		}(path, fmt.Sprintf("%s.png", strconv.Itoa(i)), v)
+		}(path, fmt.Sprintf("%s.png", strconv.Itoa(i+1)), v)
 	}
 	wg.Wait()
 }
