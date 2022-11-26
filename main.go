@@ -39,36 +39,40 @@ func getUrlArray(pathArray []string) {
 }
 
 func getLinksFromChannelUrl() {
-	f, err := os.Open("channel.txt")
+	f, err := os.Open("channel.md")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
 	urlChan := make(chan string)
-	go func() {
+	go func(ch chan string) {
 		scanner := bufio.NewScanner(f)
+		re := regexp.MustCompile(`^\| (\[.*\])\((.*)\)`)
 		for scanner.Scan() {
 			text := scanner.Text()
-			matched, err := regexp.MatchString("^https", text)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if matched {
-				urlChan <- text
+			if matches := re.FindStringSubmatch(text); len(matches) != 0 {
+				ch <- matches[2]
 			}
 			continue
 		}
 		if err := scanner.Err(); err != nil {
 			log.Fatal(err)
 		}
-		close(urlChan)
-	}()
+		close(ch)
+	}(urlChan)
 
-	allocCtx, cancelRoot := chromedp.NewExecAllocator(context.Background(), chromedp.UserDataDir(util.GetUserDataDir()), chromedp.Flag("headless", true))
+	options := []chromedp.ExecAllocatorOption{
+		chromedp.UserDataDir(util.GetUserDataDir()),
+		chromedp.Flag("headless", true),
+		chromedp.Flag("mute-audio", true),
+	}
+	options = append(chromedp.DefaultExecAllocatorOptions[:], options...)
+
+	allocCtx, cancelRoot := chromedp.NewExecAllocator(context.Background(), options...)
 	defer cancelRoot()
 
-	taskCtx, cancelFirst := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+	taskCtx, cancelFirst := chromedp.NewContext(allocCtx, chromedp.WithErrorf(log.Printf))
 	defer cancelFirst()
 	if err := chromedp.Run(taskCtx); err != nil {
 		panic(err)
@@ -77,9 +81,7 @@ func getLinksFromChannelUrl() {
 	var wg sync.WaitGroup
 	for v := range urlChan {
 		wg.Add(1)
-		newTabCtx, ccl := chromedp.NewContext(taskCtx)
-		defer ccl()
-		go util.RunTaskGetLinks(newTabCtx, &wg, v)
+		go util.RunTaskGetLinks(taskCtx, &wg, v)
 	}
 
 	// close first tab

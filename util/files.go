@@ -12,6 +12,9 @@ import (
 )
 
 func CreateFileLinks(title string, links []string) {
+	if len(links) == 0 {
+		return
+	}
 	if err := os.MkdirAll("links", os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
@@ -29,13 +32,9 @@ func CreateFileLinks(title string, links []string) {
 		go func(url string) {
 			defer wg.Done()
 			// change reso badges
-			if strings.Contains(url, "s64") {
-				url = strings.Replace(url, "s64", "s512", -1)
-			}
+			url = strings.Replace(url, "s64", "s512", -1)
 			// change reso emoji
-			if strings.Contains(url, "w48-h48") {
-				url = strings.Replace(url, "w48-h48", "w448-h448", -1)
-			}
+			url = strings.Replace(url, "w48-h48", "w448-h448", -1)
 			urlChan <- url
 		}(v)
 		url := <-urlChan
